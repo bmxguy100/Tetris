@@ -94,6 +94,11 @@ void main() {
     } while (mode != stop);
     gfx_End();
     lcd_BacklightLevel = originalBrightness;
+
+    free(tetris_logo_1);
+    free(tetris_logo_2);
+    free(tile);
+
 }
 
 void step(){
