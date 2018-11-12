@@ -64,11 +64,25 @@ mode_t mode = logo;
 short time;
 uint8_t originalBrightness;
 
+gfx_sprite_t *tetris_logo_1;
+gfx_sprite_t *tetris_logo_2;
+gfx_sprite_t *tile;
+
 void step();
 void drawTetrisLogo();
 void drawHighScores();
 
 void main() {
+    os_ClrHome();
+    os_PutStrFull("Decompressing Sprites...");
+
+    tetris_logo_1 = gfx_MallocSprite(tetris_logo_1_width, tetris_logo_1_height);
+    zx7_Decompress(tetris_logo_1, tetris_logo_1_compressed);
+    tetris_logo_2 = gfx_MallocSprite(tetris_logo_2_width, tetris_logo_2_height);
+    zx7_Decompress(tetris_logo_2, tetris_logo_2_compressed);
+    tile = gfx_MallocSprite(tile_width, tile_height);
+    zx7_Decompress(tile, tile_compressed);
+
     originalBrightness = lcd_BacklightLevel;
     gfx_Begin();
     gfx_SetPalette(tetris_gfx_pal, sizeof_tetris_gfx_pal, 0);
