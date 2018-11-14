@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <compression.h>
+
 #include <graphx.h>
 #include <keypadc.h>
 /**
@@ -54,7 +56,7 @@
 
 enum Mode {
     logo,
-    main,
+    menu,
     game,
     stop
 };
@@ -111,10 +113,10 @@ void step(){
             drawTetrisLogo();
             lcd_BacklightLevel = MAX(0, 255-(2*time));
             if (time > 128){
-                mode = main;
+                mode = menu;
             }
         break;
-        case main:
+        case menu:
             drawTetrisLogo();
             drawHighScores();
             if(kb_Data[6] & kb_Enter){
