@@ -44,11 +44,6 @@
  * @endcode
  */
 
-// Color Macro
-// R 0-7
-// G 0-7
-// R 0-3
-
 #include "gfx/tetris_gfx.h"
 
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
@@ -124,7 +119,7 @@ void step(){
             }
         break;
         case game:
-            gfx_FillScreen(0x02);
+            gfx_FillScreen(0x01);
             gfx_Sprite(tile, 0, 0);
             gfx_Sprite(tile, 16, 0);
             gfx_Sprite(tile, 0, 16);
@@ -140,7 +135,7 @@ void drawTetrisLogo(){
 }
 
 void drawHighScores(){
-    gfx_SetTextFGColor(0x08);
+    gfx_SetTextFGColor(0x02);
     gfx_PrintStringXY("High Scores:", 120, 110);
     gfx_PrintStringXY("1: 0000 - JDG", 120, 120);
     if((time >> 5) & 1){
