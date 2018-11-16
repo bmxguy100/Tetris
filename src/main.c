@@ -120,10 +120,16 @@ void step(){
         break;
         case game:
             gfx_FillScreen(0x01);
-            gfx_Sprite(tile, 0, 0);
-            gfx_Sprite(tile, 16, 0);
-            gfx_Sprite(tile, 0, 16);
-            gfx_Sprite(tile, 16, 16);
+            gfx_SetColor(0x03);
+            gfx_FillRectangle_NoClip(100, 0, 120, 240);
+            gfx_FillRectangle_NoClip(49, 5, 46, 46);
+            gfx_FillRectangle_NoClip(49, 58, 46, 128);
+            gfx_SetColor(0x04);
+            gfx_FillRectangle_NoClip(54, 10, 36, 36);
+	
+            gfx_FillRectangle_NoClip(54, 63, 36, 36);
+            gfx_FillRectangle_NoClip(54, 104, 36, 36);
+            gfx_FillRectangle_NoClip(54, 145, 36, 36);
         break;
     }
     time++;
