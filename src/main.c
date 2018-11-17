@@ -45,9 +45,14 @@
  */
 
 #include "gfx/tetris_gfx.h"
+#include "game.c"
 
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
+#define DECOMPRESS(name) \
+    name = gfx_MallocSprite(name##_width, name##_height); \
+    zx7_Decompress(name, name##_compressed)
 
 enum Mode {
     logo,
@@ -63,9 +68,13 @@ uint8_t originalBrightness;
 
 gfx_sprite_t *tetris_logo_1;
 gfx_sprite_t *tetris_logo_2;
-gfx_sprite_t *tile;
-
-bool tiles[120];
+gfx_sprite_t *tile_cyan;
+gfx_sprite_t *tile_yellow;
+gfx_sprite_t *tile_purple;
+gfx_sprite_t *tile_green;
+gfx_sprite_t *tile_red;
+gfx_sprite_t *tile_blue;
+gfx_sprite_t *tile_orange;
 
 void step();
 void drawTetrisLogo();
@@ -73,23 +82,24 @@ void drawHighScores();
 void drawTiles();
 
 void main() {
-    uint8_t i = 0;
+    uint16_t i = 0;
 
     srandom(rtc_Time());
-    for (i = 96; i < 120; i++){
-        if(random() & 1){
-            tiles[i] = true;
-        }
+    for (i = 200; i < 400; i++){
+        board[i] = random()&7;
     }
 
     os_ClrHome();
 
-    tetris_logo_1 = gfx_MallocSprite(tetris_logo_1_width, tetris_logo_1_height);
-    zx7_Decompress(tetris_logo_1, tetris_logo_1_compressed);
-    tetris_logo_2 = gfx_MallocSprite(tetris_logo_2_width, tetris_logo_2_height);
-    zx7_Decompress(tetris_logo_2, tetris_logo_2_compressed);
-    tile = gfx_MallocSprite(tile_width, tile_height);
-    zx7_Decompress(tile, tile_compressed);
+    DECOMPRESS(tetris_logo_1);
+    DECOMPRESS(tetris_logo_2);
+    DECOMPRESS(tile_cyan);
+    DECOMPRESS(tile_yellow);
+    DECOMPRESS(tile_purple);
+    DECOMPRESS(tile_green);
+    DECOMPRESS(tile_red);
+    DECOMPRESS(tile_blue);
+    DECOMPRESS(tile_orange);
 
     originalBrightness = lcd_BacklightLevel;
     gfx_Begin();
@@ -105,8 +115,13 @@ void main() {
 
     free(tetris_logo_1);
     free(tetris_logo_2);
-    free(tile);
-
+    free(tile_cyan);
+    free(tile_yellow);
+    free(tile_purple);
+    free(tile_green);
+    free(tile_red);
+    free(tile_blue);
+    free(tile_orange);
 }
 
 void step(){
@@ -133,7 +148,7 @@ void step(){
             gfx_FillScreen(0x01);
             gfx_SetColor(0x03);
             
-            gfx_FillRectangle_NoClip(100, 0, 128, 240);
+            gfx_FillRectangle_NoClip(100, 0, 120, 240);
 
             gfx_FillRectangle_NoClip(49, 5, 46, 46);
             gfx_FillRectangle_NoClip(49, 58, 46, 128);
@@ -167,11 +182,37 @@ void drawHighScores(){
 void drawTiles(){
     uint8_t x = 0;
     uint8_t y = 0;
-    uint8_t i = 0;
-    for(y = 0; y < 240; y+=16){
-        for(x = 100; x < 228; x+=16){
-            if(tiles[i]){
-                gfx_Sprite(tile, x, y);
+    uint8_t xPos = 0;
+    uint8_t yPos = 0;
+    uint16_t i = 200;
+    for(y = 0; y < 20; y++){
+        for(x = 0; x < 10; x++){
+            xPos = 12 * x + 100;
+            yPos = 12 * y;
+            switch(board[i]){
+                case none:
+                break;
+                case cyan:
+                    gfx_Sprite(tile_cyan, xPos, yPos);
+                break;
+                case yellow:
+                    gfx_Sprite(tile_yellow, xPos, yPos);
+                break;
+                case purple:
+                    gfx_Sprite(tile_purple, xPos, yPos);
+                break;
+                case green:
+                    gfx_Sprite(tile_green, xPos, yPos);
+                break;
+                case red:
+                    gfx_Sprite(tile_red, xPos, yPos);
+                break;
+                case blue:
+                    gfx_Sprite(tile_blue, xPos, yPos);
+                break;
+                case orange:
+                    gfx_Sprite(tile_orange, xPos, yPos);
+                break;
             }
             i++;
         }
