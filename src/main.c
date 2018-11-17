@@ -65,13 +65,24 @@ gfx_sprite_t *tetris_logo_1;
 gfx_sprite_t *tetris_logo_2;
 gfx_sprite_t *tile;
 
+bool tiles[120];
+
 void step();
 void drawTetrisLogo();
 void drawHighScores();
+void drawTiles();
 
 void main() {
+    uint8_t i = 0;
+
+    srandom(rtc_Time());
+    for (i = 96; i < 120; i++){
+        if(random() & 1){
+            tiles[i] = true;
+        }
+    }
+
     os_ClrHome();
-    os_PutStrFull("Decompressing Sprites...");
 
     tetris_logo_1 = gfx_MallocSprite(tetris_logo_1_width, tetris_logo_1_height);
     zx7_Decompress(tetris_logo_1, tetris_logo_1_compressed);
@@ -121,7 +132,9 @@ void step(){
         case game:
             gfx_FillScreen(0x01);
             gfx_SetColor(0x03);
-            gfx_FillRectangle_NoClip(100, 0, 120, 240);
+            
+            gfx_FillRectangle_NoClip(100, 0, 128, 240);
+
             gfx_FillRectangle_NoClip(49, 5, 46, 46);
             gfx_FillRectangle_NoClip(49, 58, 46, 128);
             gfx_SetColor(0x04);
@@ -130,6 +143,8 @@ void step(){
             gfx_FillRectangle_NoClip(54, 63, 36, 36);
             gfx_FillRectangle_NoClip(54, 104, 36, 36);
             gfx_FillRectangle_NoClip(54, 145, 36, 36);
+            
+            drawTiles();
         break;
     }
     time++;
@@ -146,5 +161,19 @@ void drawHighScores(){
     gfx_PrintStringXY("1: 0000 - JDG", 120, 120);
     if((time >> 5) & 1){
         gfx_PrintStringXY("Press    [enter]    to    start", 20, 220);
+    }
+}
+
+void drawTiles(){
+    uint8_t x = 0;
+    uint8_t y = 0;
+    uint8_t i = 0;
+    for(y = 0; y < 240; y+=16){
+        for(x = 100; x < 228; x+=16){
+            if(tiles[i]){
+                gfx_Sprite(tile, x, y);
+            }
+            i++;
+        }
     }
 }
