@@ -6,10 +6,15 @@
 # ----------------------------
 
 NAME        ?= TETRIS
-COMPRESSED  ?= NO
+COMPRESSED  ?= YES
 ICON        ?= iconc.png
 DESCRIPTION ?= "Tetris by Jack Gordon"
 
 # ----------------------------
 
 include $(CEDEV)/include/.makefile
+
+install:
+	tilp -n -s $(BINDIR)/*.8xp
+
+.PHONY: install

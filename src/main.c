@@ -45,7 +45,8 @@
  */
 
 #include "gfx/tetris_gfx.h"
-#include "game.c"
+#include "game.h"
+#include "queue.h"
 
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -53,6 +54,7 @@
 #define DECOMPRESS(name) \
     name = gfx_MallocSprite(name##_width, name##_height); \
     zx7_Decompress(name, name##_compressed)
+
 
 enum Mode {
     logo,
@@ -75,19 +77,18 @@ gfx_sprite_t *tile_green;
 gfx_sprite_t *tile_red;
 gfx_sprite_t *tile_blue;
 gfx_sprite_t *tile_orange;
+gfx_sprite_t *tile_outline;
 
 void step();
 void drawTetrisLogo();
 void drawHighScores();
+void drawUI();
 void drawTiles();
 
 void main() {
     uint16_t i = 0;
 
     srandom(rtc_Time());
-    for (i = 200; i < 400; i++){
-        board[i] = random()&7;
-    }
 
     os_ClrHome();
 
@@ -100,6 +101,7 @@ void main() {
     DECOMPRESS(tile_red);
     DECOMPRESS(tile_blue);
     DECOMPRESS(tile_orange);
+    DECOMPRESS(tile_outline);
 
     originalBrightness = lcd_BacklightLevel;
     gfx_Begin();
@@ -122,6 +124,7 @@ void main() {
     free(tile_red);
     free(tile_blue);
     free(tile_orange);
+    free(tile_outline);
 }
 
 void step(){
@@ -132,8 +135,8 @@ void step(){
     switch(mode){
         case logo:
             drawTetrisLogo();
-            lcd_BacklightLevel = MAX(0, 255-(2*time));
-            if (time > 128){
+            lcd_BacklightLevel = MAX(0, 255-(4*time));
+            if (time > 70){
                 mode = menu;
             }
         break;
@@ -141,28 +144,23 @@ void step(){
             drawTetrisLogo();
             drawHighScores();
             if(kb_Data[6] & kb_Enter){
-                mode = game;
+                startGame();
             }
         break;
         case game:
-            gfx_FillScreen(0x01);
-            gfx_SetColor(0x03);
-            
-            gfx_FillRectangle_NoClip(100, 0, 120, 240);
-
-            gfx_FillRectangle_NoClip(49, 5, 46, 46);
-            gfx_FillRectangle_NoClip(49, 58, 46, 128);
-            gfx_SetColor(0x04);
-            gfx_FillRectangle_NoClip(54, 10, 36, 36);
-	
-            gfx_FillRectangle_NoClip(54, 63, 36, 36);
-            gfx_FillRectangle_NoClip(54, 104, 36, 36);
-            gfx_FillRectangle_NoClip(54, 145, 36, 36);
-            
+            drawUI();            
             drawTiles();
         break;
     }
     time++;
+}
+
+void startGame(){
+    while(kb_Data[6] & kb_Enter){
+        kb_Scan();
+    }
+    initializeQueue();
+    mode = game;
 }
 
 void drawTetrisLogo(){
@@ -179,6 +177,78 @@ void drawHighScores(){
     }
 }
 
+void drawUI(){
+    gfx_FillScreen(0x01);
+    gfx_SetColor(0x03);
+    
+    gfx_FillRectangle_NoClip(100, 0, 120, 240); // Game Board
+
+    gfx_FillRectangle_NoClip(225, 5, 60, 60); // Stored Piece BG
+    gfx_FillRectangle_NoClip(35, 5, 60, 170); // Queue BG
+
+    gfx_SetColor(0x04);
+
+    gfx_FillRectangle_NoClip(230, 10, 50, 50); // Stored Piece
+
+    // Queue
+    gfx_FillRectangle_NoClip(40, 10, 50, 50);
+    gfx_FillRectangle_NoClip(40, 65, 50, 50);
+    gfx_FillRectangle_NoClip(40, 120, 50, 50);
+
+    drawTetriminoPreview(queue[1], 41, 11);
+    drawTetriminoPreview(queue[2], 41, 66);
+    drawTetriminoPreview(queue[3], 41, 121);
+}
+
+void drawTetriminoPreview(tetrimino_tile_t tetrimino, uint16_t x, uint8_t y){
+    switch (tetrimino){
+        case none:
+        break;
+        case I:
+            gfx_Sprite(tile_cyan, x, y + 18);
+            gfx_Sprite(tile_cyan, x + 12, y + 18);
+            gfx_Sprite(tile_cyan, x + 24, y + 18);
+            gfx_Sprite(tile_cyan, x + 36, y + 18);
+        break;
+        case O:
+            gfx_Sprite(tile_yellow, x + 12, y + 12);
+            gfx_Sprite(tile_yellow, x + 24, y + 12);
+            gfx_Sprite(tile_yellow, x + 12, y + 24);
+            gfx_Sprite(tile_yellow, x + 24, y + 24);
+        break;
+        case T:
+            gfx_Sprite(tile_purple, x + 18, y + 12);
+            gfx_Sprite(tile_purple, x + 6, y + 24);
+            gfx_Sprite(tile_purple, x + 18, y + 24);
+            gfx_Sprite(tile_purple, x + 30, y + 24);
+        break;
+        case S:
+            gfx_Sprite(tile_green, x + 18, y + 12);
+            gfx_Sprite(tile_green, x + 30, y + 12);
+            gfx_Sprite(tile_green, x + 6, y + 24);
+            gfx_Sprite(tile_green, x + 18, y + 24);
+        break;
+        case Z:
+            gfx_Sprite(tile_red, x + 6, y + 12);
+            gfx_Sprite(tile_red, x + 18, y + 12);
+            gfx_Sprite(tile_red, x + 18, y + 24);
+            gfx_Sprite(tile_red, x + 30, y + 24);
+        break;
+        case J:
+            gfx_Sprite(tile_blue, x + 6, y + 12);
+            gfx_Sprite(tile_blue, x + 6, y + 24);
+            gfx_Sprite(tile_blue, x + 18, y + 24);
+            gfx_Sprite(tile_blue, x + 30, y + 24);
+        break;
+        case L:
+            gfx_Sprite(tile_orange, x + 30, y + 12);
+            gfx_Sprite(tile_orange, x + 6, y + 24);
+            gfx_Sprite(tile_orange, x + 18, y + 24);
+            gfx_Sprite(tile_orange, x + 30, y + 24);
+        break;
+    }
+}
+
 void drawTiles(){
     uint8_t x = 0;
     uint8_t y = 0;
@@ -191,26 +261,27 @@ void drawTiles(){
             yPos = 12 * y;
             switch(board[i]){
                 case none:
+                    // TODO: Check for outline or current piece
                 break;
-                case cyan:
+                case I:
                     gfx_Sprite(tile_cyan, xPos, yPos);
                 break;
-                case yellow:
+                case O:
                     gfx_Sprite(tile_yellow, xPos, yPos);
                 break;
-                case purple:
+                case T:
                     gfx_Sprite(tile_purple, xPos, yPos);
                 break;
-                case green:
+                case S:
                     gfx_Sprite(tile_green, xPos, yPos);
                 break;
-                case red:
+                case Z:
                     gfx_Sprite(tile_red, xPos, yPos);
                 break;
-                case blue:
+                case J:
                     gfx_Sprite(tile_blue, xPos, yPos);
                 break;
-                case orange:
+                case L:
                     gfx_Sprite(tile_orange, xPos, yPos);
                 break;
             }
