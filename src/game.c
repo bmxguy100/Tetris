@@ -22,7 +22,7 @@ tetrimino_tile_t tetriminoLUTUnclipped(tetrimino_tile_t tetrimino, int8_t x, int
       case J:
         return J_ROTATION_LUT[rotation][y][x];
       case L:
-        return I_ROTATION_LUT[rotation][y][x];
+        return L_ROTATION_LUT[rotation][y][x];
       case O:
         return O;
       break;
