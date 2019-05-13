@@ -65,7 +65,6 @@ enum Mode {
 typedef enum Mode mode_t;
 
 mode_t mode = logo;
-short time;
 uint8_t originalBrightness;
 
 gfx_sprite_t *tetris_logo_1;
@@ -80,10 +79,12 @@ gfx_sprite_t *tile_orange;
 gfx_sprite_t *tile_outline;
 
 void step();
+void startGame();
 void drawTetrisLogo();
 void drawHighScores();
 void drawUI();
 void drawTiles();
+void drawTetriminoPreview(tetrimino_tile_t tetrimino, uint16_t x, uint8_t y);
 
 void main() {
     uint16_t i = 0;
@@ -135,8 +136,8 @@ void step(){
     switch(mode){
         case logo:
             drawTetrisLogo();
-            lcd_BacklightLevel = MAX(0, 255-(4*time));
-            if (time > 70){
+            lcd_BacklightLevel = MAX(0, 255-(4*frameCount));
+            if (frameCount > 70){
                 mode = menu;
             }
         break;
@@ -148,11 +149,15 @@ void step(){
             }
         break;
         case game:
+            processInput();
             drawUI();            
             drawTiles();
+            if(kb_Data[1] & kb_Del){
+                mode = menu;
+            }
         break;
     }
-    time++;
+    frameCount++;
 }
 
 void startGame(){
@@ -160,6 +165,7 @@ void startGame(){
         kb_Scan();
     }
     initializeQueue();
+    resetTetriminoPostion();
     mode = game;
 }
 
@@ -172,7 +178,7 @@ void drawHighScores(){
     gfx_SetTextFGColor(0x02);
     gfx_PrintStringXY("High Scores:", 120, 110);
     gfx_PrintStringXY("1: 0000 - JDG", 120, 120);
-    if((time >> 5) & 1){
+    if((frameCount >> 5) & 1){
         gfx_PrintStringXY("Press    [enter]    to    start", 20, 220);
     }
 }
@@ -190,6 +196,8 @@ void drawUI(){
 
     gfx_FillRectangle_NoClip(230, 10, 50, 50); // Stored Piece
 
+    drawTetriminoPreview(asideTetrimino, 231, 11);
+
     // Queue
     gfx_FillRectangle_NoClip(40, 10, 50, 50);
     gfx_FillRectangle_NoClip(40, 65, 50, 50);
@@ -202,7 +210,7 @@ void drawUI(){
 
 void drawTetriminoPreview(tetrimino_tile_t tetrimino, uint16_t x, uint8_t y){
     switch (tetrimino){
-        case none:
+        case _:
         break;
         case I:
             gfx_Sprite(tile_cyan, x, y + 18);
@@ -254,14 +262,12 @@ void drawTiles(){
     uint8_t y = 0;
     uint8_t xPos = 0;
     uint8_t yPos = 0;
-    uint16_t i = 200;
     for(y = 0; y < 20; y++){
         for(x = 0; x < 10; x++){
             xPos = 12 * x + 100;
             yPos = 12 * y;
-            switch(board[i]){
-                case none:
-                    // TODO: Check for outline or current piece
+            switch(getTileAt(x, y+20)){
+                case _:
                 break;
                 case I:
                     gfx_Sprite(tile_cyan, xPos, yPos);
@@ -284,8 +290,10 @@ void drawTiles(){
                 case L:
                     gfx_Sprite(tile_orange, xPos, yPos);
                 break;
+                case outline:
+                    gfx_Sprite(tile_outline, xPos, yPos);
+                break;
             }
-            i++;
         }
     }
 }

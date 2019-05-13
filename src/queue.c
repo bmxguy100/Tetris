@@ -5,7 +5,7 @@
 
 #include "queue.h"
 
-tetrimino_tile_t queue[3];
+tetrimino_tile_t queue[4];
 tetrimino_tile_t asideTetrimino;
 
 tetrimino_tile_t bag[7];
@@ -50,5 +50,12 @@ void initializeQueue(){
   queue[2] = bagPop();
   queue[3] = bagPop();
 
-  // asideTetrimino = none;
+  asideTetrimino = _;
+}
+
+void nextQueueTetrimino(){
+  queue[0] = queue[1];
+  queue[1] = queue[2];
+  queue[2] = queue[3];
+  queue[3] = bagPop();
 }
