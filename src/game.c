@@ -2,11 +2,14 @@
 #include "queue.h"
 #include "srs.h"
 
+#include <string.h>
+
 uint24_t frameCount;
 tetrimino_tile_t board[400];
 
 int8_t currentPieceX = 0;
 int8_t currentPieceY = 0;
+int8_t currentOutlineY = 0;
 int8_t rotation = 0;
 
 tetrimino_tile_t tetriminoLUTUnclipped(tetrimino_tile_t tetrimino, int8_t x, int8_t y, int8_t rotation){
@@ -50,9 +53,8 @@ tetrimino_tile_t getTileAt(int8_t x, int8_t y){
   a = tetriminoLUT(queue[0], currentPieceX, currentPieceY, x, y, rotation);
   if(a != _) return a;
 
-  // TODO: Get Outline y-postion
-  // a = tetriminoLUT(queue[0], currentPieceX, 38, x, y, rotation);
-  // if(a != _) return outline;
+  a = tetriminoLUT(queue[0], currentPieceX, currentOutlineY, x, y, rotation);
+  if(a != _) return outline;
 
   return _;
 }
@@ -79,57 +81,66 @@ bool inBoundingBox(tetrimino_tile_t tetrimino, int8_t tetriminoX, int8_t tetrimi
     (y <= tetriminoY + 2));
 }
 
-bool tryMove(int8_t x, int8_t y, int8_t rotationDir){
-  int8_t newX = currentPieceX + x;
-  int8_t newY = currentPieceY + y;
-  int8_t newRotation = (rotation + rotationDir + 4) % 4;
-
-  if(queue[0] == O){
-    bool canMove =
-     (boardLookUp(newX,   newY  ) == _) &&
-     (boardLookUp(newX+1, newY  ) == _) &&
-     (boardLookUp(newX,   newY+1) == _) &&
-     (boardLookUp(newX+1, newY+1) == _);
-    
-    if(canMove){
-      currentPieceX = newX;
-      currentPieceY = newY;
-      return true;
-    }
-    return false;
+bool testPiecePosition(tetrimino_tile_t tetrimino, int8_t x, int8_t y, int8_t rotation){
+  if(tetrimino == O){
+    return
+     (boardLookUp(x,   y  ) == _) &&
+     (boardLookUp(x+1, y  ) == _) &&
+     (boardLookUp(x,   y+1) == _) &&
+     (boardLookUp(x+1, y+1) == _);
   }else if(queue[0] == I){
     uint8_t xi;
     uint8_t yi;
     for (xi = 0; xi < 4; xi++){
       for (yi = 0; yi < 4; yi++){
-        if(tetriminoLUTUnclipped(queue[0], xi, yi, newRotation) != _){
-          if(boardLookUp(newX + xi, newY + yi) != _){
+        if(tetriminoLUTUnclipped(queue[0], xi, yi, rotation) != _){
+          if(boardLookUp(x + xi, y + yi) != _){
             return false;
           }
         }
       }
     }
-    currentPieceX = newX;
-    currentPieceY = newY;
-    rotation = newRotation;
     return true;
   }else{
     uint8_t xi;
     uint8_t yi;
     for (xi = 0; xi < 3; xi++){
       for (yi = 0; yi < 3; yi++){
-        if(tetriminoLUTUnclipped(queue[0], xi, yi, newRotation) != _){
-          if(boardLookUp(newX + xi, newY + yi) != _){
+        if(tetriminoLUTUnclipped(queue[0], xi, yi, rotation) != _){
+          if(boardLookUp(x + xi, y + yi) != _){
             return false;
           }
         }
       }
     }
+    return true;
+  }}
+
+bool tryMove(int8_t x, int8_t y, int8_t rotationDir){
+  int8_t newX = currentPieceX + x;
+  int8_t newY = currentPieceY + y;
+  int8_t newRotation = (rotation + rotationDir + 4) % 4;
+
+  bool canMove = testPiecePosition(queue[0], newX, newY, newRotation);
+
+  if(canMove){
+    int8_t newOutlineY;
+
     currentPieceX = newX;
     currentPieceY = newY;
     rotation = newRotation;
+
+    currentOutlineY = 0;
+    for(newOutlineY = currentPieceY; newOutlineY < 45; newOutlineY++){
+      if(!testPiecePosition(queue[0], currentPieceX, newOutlineY, rotation)){
+        currentOutlineY = newOutlineY - 1;
+        break;
+      }
+    }
+
     return true;
   }
+  return false;
 }
 
 bool tryRotate(int8_t dir){
@@ -170,7 +181,7 @@ void resetTetriminoPostion(){
     currentPieceX = 3;
     currentPieceY = 20;
   }
-  // TODO: Check for game over
+  rotation = 0;
 }
 
 void lockTetriminoPosiontion(){
@@ -202,4 +213,31 @@ void lockTetriminoPosiontion(){
   }
   nextQueueTetrimino();
   resetTetriminoPostion();
+  if(tryMove(0,0,0)){
+    int8_t lineClearX;
+    int8_t lineClearY;
+    bool flag;
+    do{
+      flag = false;
+      for(lineClearY = 0; lineClearY < 40; lineClearY++){
+        bool flag2 = true;
+        for(lineClearX = 0; lineClearX < 10; lineClearX++){
+          if(board[lineClearX + 10 * lineClearY] == _){
+            flag2 = false;
+            break;
+          }
+        }
+        if(flag2){
+          uint16_t i;
+          flag = true;
+          for(i = lineClearY * 10 + 9; i >= 10; i--){
+            board[i] = board[i-10];
+          }
+          break;
+        }
+      }
+    }while(flag);
+  }else{
+    endGame();
+  }
 }

@@ -10,6 +10,7 @@ tetrimino_tile_t asideTetrimino;
 
 tetrimino_tile_t bag[7];
 uint8_t bagIndex = 0;
+bool wasTetriminoStored;
 
 void resetBag(){
   uint8_t i, j;
@@ -51,6 +52,7 @@ void initializeQueue(){
   queue[3] = bagPop();
 
   asideTetrimino = _;
+  wasTetriminoStored = false;
 }
 
 void nextQueueTetrimino(){
@@ -58,4 +60,19 @@ void nextQueueTetrimino(){
   queue[1] = queue[2];
   queue[2] = queue[3];
   queue[3] = bagPop();
+  wasTetriminoStored = false;
+}
+
+void storeTetrimino(){
+  if(!wasTetriminoStored){
+    tetrimino_tile_t temp = asideTetrimino;
+    asideTetrimino = queue[0];
+    if(temp == _){
+      nextQueueTetrimino();
+    }else{
+      queue[0] = temp;
+    }
+    resetTetriminoPostion();
+    wasTetriminoStored = true;
+  }
 }

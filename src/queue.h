@@ -8,5 +8,6 @@ extern tetrimino_tile_t asideTetrimino;
 
 void initializeQueue();
 void nextQueueTetrimino();
+void storeTetrimino();
 
 #endif

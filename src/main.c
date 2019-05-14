@@ -44,9 +44,20 @@
  * @endcode
  */
 
+void step();
+void startGame();
+void endGame();
+void drawTetrisLogo();
+void drawHighScores();
+void drawUI();
+void drawTiles();
+void drawGameOver();
+
 #include "gfx/tetris_gfx.h"
 #include "game.h"
 #include "queue.h"
+
+void drawTetriminoPreview(tetrimino_tile_t tetrimino, uint16_t x, uint8_t y);
 
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -60,6 +71,7 @@ enum Mode {
     logo,
     menu,
     game,
+    gameOver,
     stop
 };
 typedef enum Mode mode_t;
@@ -77,14 +89,6 @@ gfx_sprite_t *tile_red;
 gfx_sprite_t *tile_blue;
 gfx_sprite_t *tile_orange;
 gfx_sprite_t *tile_outline;
-
-void step();
-void startGame();
-void drawTetrisLogo();
-void drawHighScores();
-void drawUI();
-void drawTiles();
-void drawTetriminoPreview(tetrimino_tile_t tetrimino, uint16_t x, uint8_t y);
 
 void main() {
     uint16_t i = 0;
@@ -156,6 +160,12 @@ void step(){
                 mode = menu;
             }
         break;
+        case gameOver:
+            drawGameOver();
+            if(kb_Data[1] & kb_Del){
+                mode = menu;
+            }
+        break;
     }
     frameCount++;
 }
@@ -164,9 +174,15 @@ void startGame(){
     while(kb_Data[6] & kb_Enter){
         kb_Scan();
     }
+    memset(board, _, sizeof(board));
     initializeQueue();
     resetTetriminoPostion();
     mode = game;
+}
+
+void endGame(){
+    mode = gameOver;
+    // TODO: Add to high scores
 }
 
 void drawTetrisLogo(){
@@ -176,10 +192,10 @@ void drawTetrisLogo(){
 
 void drawHighScores(){
     gfx_SetTextFGColor(0x02);
-    gfx_PrintStringXY("High Scores:", 120, 110);
-    gfx_PrintStringXY("1: 0000 - JDG", 120, 120);
+    gfx_PrintStringXY("High Scores:", 120, 120);
+    gfx_PrintStringXY("1: 0000 - JDG", 120, 130);
     if((frameCount >> 5) & 1){
-        gfx_PrintStringXY("Press    [enter]    to    start", 20, 220);
+        gfx_PrintStringXY("Press    [enter]    to    start", 20, 225);
     }
 }
 
@@ -296,4 +312,20 @@ void drawTiles(){
             }
         }
     }
+}
+
+void drawGameOver(){
+    gfx_FillScreen(0x01);
+    gfx_SetColor(0x03);
+    
+    gfx_FillRectangle_NoClip(50, 30, 220, 200);
+
+    gfx_SetTextFGColor(0x01);
+    gfx_SetTextScale(3, 4);
+    gfx_PrintStringXY("Game Over!", 55, 35);
+
+    gfx_SetTextScale(1, 1);
+    gfx_PrintStringXY("Score:", 55, 75);
+    gfx_PrintStringXY("Lines Cleared:", 55, 85);
+    gfx_PrintStringXY("Level:", 55, 95);
 }

@@ -64,6 +64,10 @@ void processInput(){
   wasRotateLeftKey = rotateLeftKey;
   wasStoreKey = storeKey;
 
+  if(store){
+    storeTetrimino();
+  }
+
   if(left || right || softDrop){
     tryMove(left ? -1 : (right ? 1 : 0), softDrop ? 1 : 0, 0);
   }
