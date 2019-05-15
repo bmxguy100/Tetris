@@ -90,6 +90,8 @@ gfx_sprite_t *tile_blue;
 gfx_sprite_t *tile_orange;
 gfx_sprite_t *tile_outline;
 
+bool gameStarted = false;
+
 void main() {
     uint16_t i = 0;
 
@@ -174,14 +176,22 @@ void startGame(){
     while(kb_Data[6] & kb_Enter){
         kb_Scan();
     }
-    memset(board, _, sizeof(board));
-    initializeQueue();
-    resetTetriminoPostion();
+
+    if(!gameStarted) {
+        memset(board, _, sizeof(board));
+        initializeQueue();
+        resetTetriminoPostion();
+        score = 0;
+        linesCleared = 0;
+        level = 1;
+    }
     mode = game;
+    gameStarted = true;
 }
 
 void endGame(){
     mode = gameOver;
+    gameStarted = false;
     // TODO: Add to high scores
 }
 
@@ -192,8 +202,8 @@ void drawTetrisLogo(){
 
 void drawHighScores(){
     gfx_SetTextFGColor(0x02);
-    gfx_PrintStringXY("High Scores:", 120, 120);
-    gfx_PrintStringXY("1: 0000 - JDG", 120, 130);
+    // gfx_PrintStringXY("High Scores:", 120, 120);
+    // gfx_PrintStringXY("1: 0000 - JDG", 120, 130);
     if((frameCount >> 5) & 1){
         gfx_PrintStringXY("Press    [enter]    to    start", 20, 225);
     }
@@ -207,6 +217,18 @@ void drawUI(){
 
     gfx_FillRectangle_NoClip(225, 5, 60, 60); // Stored Piece BG
     gfx_FillRectangle_NoClip(35, 5, 60, 170); // Queue BG
+
+    gfx_FillRectangle_NoClip(225, 70, 125, 50); // Scoring
+    // Scoring Text
+    gfx_SetTextFGColor(0x01);
+    gfx_PrintStringXY("Score: ", 230, 75);
+    gfx_PrintUInt(score, 1);
+
+    gfx_PrintStringXY("Lines: ", 230, 90);
+    gfx_PrintUInt(linesCleared, 1);
+
+    gfx_PrintStringXY("Level: ", 230, 105);
+    gfx_PrintUInt(level, 1);
 
     gfx_SetColor(0x04);
 
@@ -278,6 +300,9 @@ void drawTiles(){
     uint8_t y = 0;
     uint8_t xPos = 0;
     uint8_t yPos = 0;
+
+    calculateOutline();
+
     for(y = 0; y < 20; y++){
         for(x = 0; x < 10; x++){
             xPos = 12 * x + 100;
@@ -318,14 +343,22 @@ void drawGameOver(){
     gfx_FillScreen(0x01);
     gfx_SetColor(0x03);
     
-    gfx_FillRectangle_NoClip(50, 30, 220, 200);
+    gfx_FillRectangle_NoClip(50, 30, 220, 120);
 
     gfx_SetTextFGColor(0x01);
     gfx_SetTextScale(3, 4);
     gfx_PrintStringXY("Game Over!", 55, 35);
 
     gfx_SetTextScale(1, 1);
-    gfx_PrintStringXY("Score:", 55, 75);
-    gfx_PrintStringXY("Lines Cleared:", 55, 85);
-    gfx_PrintStringXY("Level:", 55, 95);
+
+    gfx_PrintStringXY("Score: ", 55, 75);
+    gfx_PrintUInt(score, 1);
+
+    gfx_PrintStringXY("Lines Cleared: ", 55, 95);
+    gfx_PrintUInt(linesCleared, 1);
+
+    gfx_PrintStringXY("Level: ", 55, 115);
+    gfx_PrintUInt(level, 1);
+
+    gfx_PrintStringXY("Press [del] to go back", 55, 135);
 }

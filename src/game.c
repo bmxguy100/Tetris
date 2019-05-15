@@ -12,6 +12,10 @@ int8_t currentPieceY = 0;
 int8_t currentOutlineY = 0;
 int8_t rotation = 0;
 
+uint24_t score;
+uint24_t linesCleared;
+uint24_t level;
+
 tetrimino_tile_t tetriminoLUTUnclipped(tetrimino_tile_t tetrimino, int8_t x, int8_t y, int8_t rotation){
   switch (tetrimino){
       case I:
@@ -57,6 +61,18 @@ tetrimino_tile_t getTileAt(int8_t x, int8_t y){
   if(a != _) return outline;
 
   return _;
+}
+
+void calculateOutline(){
+  int8_t newOutlineY;
+
+  currentOutlineY = 0;
+  for(newOutlineY = currentPieceY; newOutlineY < 45; newOutlineY++){
+    if(!testPiecePosition(queue[0], currentPieceX, newOutlineY, rotation)){
+      currentOutlineY = newOutlineY - 1;
+      break;
+    }
+  }
 }
 
 bool inBoundingBox(tetrimino_tile_t tetrimino, int8_t tetriminoX, int8_t tetriminoY, int8_t x, int8_t y){
@@ -129,14 +145,6 @@ bool tryMove(int8_t x, int8_t y, int8_t rotationDir){
     currentPieceX = newX;
     currentPieceY = newY;
     rotation = newRotation;
-
-    currentOutlineY = 0;
-    for(newOutlineY = currentPieceY; newOutlineY < 45; newOutlineY++){
-      if(!testPiecePosition(queue[0], currentPieceX, newOutlineY, rotation)){
-        currentOutlineY = newOutlineY - 1;
-        break;
-      }
-    }
 
     return true;
   }
@@ -216,6 +224,7 @@ void lockTetriminoPosiontion(){
   if(tryMove(0,0,0)){
     int8_t lineClearX;
     int8_t lineClearY;
+    uint8_t linesClearedOnce = 0;
     bool flag;
     do{
       flag = false;
@@ -233,10 +242,23 @@ void lockTetriminoPosiontion(){
           for(i = lineClearY * 10 + 9; i >= 10; i--){
             board[i] = board[i-10];
           }
+          linesClearedOnce++;
           break;
         }
       }
     }while(flag);
+    linesCleared += linesClearedOnce;
+    level = linesCleared / 10 + 1;
+
+    if(linesClearedOnce == 1){
+      score += 100 * level; // Single
+    }else if(linesClearedOnce == 2){
+      score += 300 * level; // Double
+    }else if(linesClearedOnce == 3){
+      score += 500 * level; // Triple
+    }else if(linesClearedOnce == 4) {
+      score += 800 * level; // Tetris!
+    }
   }else{
     endGame();
   }

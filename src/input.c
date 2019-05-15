@@ -1,11 +1,12 @@
 #include "input.h"
 
-#define IDLE_DAS_CYCLES 7
-#define DAS_FRAMES 2
+#define IDLE_DAS_CYCLES 6
 
 uint24_t leftDASCounter;
 uint24_t rightDASCounter;
 uint24_t softDropDASCounter;
+
+int8_t lockDelay = 0;
 
 bool wasHardDropKey;
 bool wasRotateRightKey;
@@ -33,26 +34,22 @@ void processInput(){
   bool right = false;
   bool softDrop = false;
 
+  uint8_t speed;
+
   if(leftKey && !rightKey) {
     leftDASCounter++;
   } else {
-    if(frameCount % DAS_FRAMES == 0){
-      leftDASCounter = 0;
-    }
+    leftDASCounter = 0;
   }
   if(rightKey && !leftKey) {
     rightDASCounter++;
   } else {
-    if(frameCount % DAS_FRAMES == 0){
-      rightDASCounter = 0;
-    }
+    rightDASCounter = 0;
   }
   if(softDropKey) {
     softDropDASCounter++;
   } else {
-    if(frameCount % DAS_FRAMES == 0){
-      softDropDASCounter = 0;
-    }
+    softDropDASCounter = 0;
   }
 
   left = (leftDASCounter == 1) || (leftDASCounter > IDLE_DAS_CYCLES);
@@ -68,8 +65,14 @@ void processInput(){
     storeTetrimino();
   }
 
-  if(left || right || softDrop){
-    tryMove(left ? -1 : (right ? 1 : 0), softDrop ? 1 : 0, 0);
+  if(left || right){
+    tryMove(left ? -1 : (right ? 1 : 0), 0, 0);
+  }
+
+  if(softDrop){
+    if(tryMove(0, 1, 0)){
+      score += 1;
+    }
   }
 
   if(rotateLeft){
@@ -79,15 +82,33 @@ void processInput(){
   if(rotateRight){
     tryRotate(1);
   }
+  
+  if(level <= 1){
+    speed = 5;
+  }else if(level == 2){
+    speed = 4;
+  }else if(level == 3){
+    speed = 3;
+  }else if(level <= 5){
+    speed = 2;
+  }else {
+    speed = 1;
+  }
 
-  if(frameCount % 10 == 0){
-    if(!tryMove(0, 1, 0)){
-      lockTetriminoPosiontion();
+  if(frameCount % speed == 0){
+    if(tryMove(0, 1, 0)){
+      lockDelay = 4;
+    }else{
+      if(--lockDelay == 0){
+        lockTetriminoPosiontion();
+      }
     }
   }
 
   if(hardDrop){
-    while(tryMove(0, 1, 0)){}
+    while(tryMove(0, 1, 0)){
+      score += 2;
+    }
     lockTetriminoPosiontion();
   }
 }
