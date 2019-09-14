@@ -1,4 +1,5 @@
 #include "input.h"
+#include "queue.h"
 
 #define IDLE_DAS_CYCLES 6
 

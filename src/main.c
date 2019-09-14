@@ -7,10 +7,6 @@
  *--------------------------------------
 */
 
-/* Keep these headers */
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <tice.h>
 
 /* Standard headers (recommended) */
@@ -55,7 +51,9 @@ void drawGameOver();
 
 #include "gfx/tetris_gfx.h"
 #include "game.h"
+#include "input.h"
 #include "queue.h"
+#include "files.h"
 
 void drawTetriminoPreview(tetrimino_tile_t tetrimino, uint16_t x, uint8_t y);
 
@@ -112,11 +110,17 @@ void main() {
     gfx_Begin();
     gfx_SetPalette(tetris_gfx_pal, sizeof_tetris_gfx_pal, 0);
     gfx_SetDrawBuffer();
+    gfx_SetMonospaceFont(8);
+
+    loadHighScores();
 
     do {
         step();
         gfx_SwapDraw();
     } while (mode != stop);
+
+    saveHighScores();
+
     gfx_End();
 
     free(tetris_logo_1);
@@ -146,7 +150,7 @@ void step(){
         break;
         case game:
             processInput();
-            drawUI();            
+            drawUI();
             drawTiles();
             if(kb_Data[1] & kb_Del){
                 mode = menu;
@@ -180,9 +184,25 @@ void startGame(){
 }
 
 void endGame(){
+    uint8_t i;
+
     mode = gameOver;
     gameStarted = false;
-    // TODO: Add to high scores
+
+    if(score > highscores[4].score){
+        highscores[4].score = score;
+        // TODO: Get Initials from user
+        highscores[4].c1 = 'A';
+        highscores[4].c2 = 'B';
+        highscores[4].c3 = 'C';
+    }
+    for(i = 4; i-- > 0;){
+        if(highscores[i + 1].score > highscores[i].score){
+            highscore_t tmp = highscores[i];
+            highscores[i] = highscores[i + 1];
+            highscores[i + 1] = tmp;
+        }
+    }
 }
 
 void drawTetrisLogo(){
@@ -191,11 +211,22 @@ void drawTetrisLogo(){
 }
 
 void drawHighScores(){
+    uint8_t i;
+
     gfx_SetTextFGColor(0x02);
-    gfx_PrintStringXY("High Scores:", 120, 120);
-    gfx_PrintStringXY("1: 0000 - JDG", 120, 130);
-    if((frameCount >> 5) & 1){
-        gfx_PrintStringXY("Press    [enter]    to    start", 20, 225);
+    gfx_PrintStringXY("Leaderboard:", 115, 120);
+    for(i = 0; i < 5; i++){
+        gfx_SetTextXY(112, 135 + i * 15);
+        gfx_PrintUInt(i + 1, 1);
+        gfx_PrintString(":");
+        gfx_PrintUInt(highscores[i].score, 6);
+        gfx_PrintString(" ");
+        gfx_PrintChar(highscores[i].c1);
+        gfx_PrintChar(highscores[i].c2);
+        gfx_PrintChar(highscores[i].c3);
+    }
+    if((frameCount >> 4) & 1){
+        gfx_PrintStringXY("Press [enter] to  start game", 48, 225);
     }
 }
 
@@ -211,13 +242,13 @@ void drawUI(){
     gfx_FillRectangle_NoClip(225, 70, 125, 50); // Scoring
     // Scoring Text
     gfx_SetTextFGColor(0x01);
-    gfx_PrintStringXY("Score: ", 230, 75);
+    gfx_PrintStringXY("Score:", 230, 75);
     gfx_PrintUInt(score, 1);
 
-    gfx_PrintStringXY("Lines: ", 230, 90);
+    gfx_PrintStringXY("Lines:", 230, 90);
     gfx_PrintUInt(linesCleared, 1);
 
-    gfx_PrintStringXY("Level: ", 230, 105);
+    gfx_PrintStringXY("Level:", 230, 105);
     gfx_PrintUInt(level, 1);
 
     gfx_SetColor(0x04);
@@ -341,13 +372,13 @@ void drawGameOver(){
 
     gfx_SetTextScale(1, 1);
 
-    gfx_PrintStringXY("Score: ", 55, 75);
+    gfx_PrintStringXY("Score:", 55, 75);
     gfx_PrintUInt(score, 1);
 
-    gfx_PrintStringXY("Lines Cleared: ", 55, 95);
+    gfx_PrintStringXY("Lines:", 55, 95);
     gfx_PrintUInt(linesCleared, 1);
 
-    gfx_PrintStringXY("Level: ", 55, 115);
+    gfx_PrintStringXY("Level:", 55, 115);
     gfx_PrintUInt(level, 1);
 
     gfx_PrintStringXY("Press [del] to go back", 55, 135);
