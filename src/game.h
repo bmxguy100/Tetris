@@ -8,18 +8,16 @@
 #include <stdint.h>
 #include <tice.h>
 
-enum Tetrimino_Tile {
-    _,
-    I,
-    O,
-    T,
-    S,
-    Z,
-    J,
-    L,
-    outline
-};
-typedef enum Tetrimino_Tile tetrimino_tile_t;
+#define _ 0
+#define I 1
+#define O 2
+#define T 3
+#define S 4
+#define Z 5
+#define J 6
+#define L 7
+#define outline 8
+typedef char tetrimino_tile_t;
 
 #include "srs.h"
 

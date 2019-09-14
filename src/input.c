@@ -83,15 +83,9 @@ void processInput(){
     tryRotate(1);
   }
   
-  if(level <= 1){
-    speed = 5;
-  }else if(level == 2){
-    speed = 4;
-  }else if(level == 3){
-    speed = 3;
-  }else if(level <= 5){
-    speed = 2;
-  }else {
+  if(level <= 4){
+    speed = 15 - (level * 3);
+  } else {
     speed = 1;
   }
 

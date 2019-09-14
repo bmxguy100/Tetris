@@ -68,7 +68,6 @@ void drawTetriminoPreview(tetrimino_tile_t tetrimino, uint16_t x, uint8_t y);
 
 
 enum Mode {
-    logo,
     menu,
     game,
     gameOver,
@@ -76,7 +75,7 @@ enum Mode {
 };
 typedef enum Mode mode_t;
 
-mode_t mode = logo;
+mode_t mode = menu;
 uint8_t originalBrightness;
 
 gfx_sprite_t *tetris_logo_1;
@@ -110,7 +109,6 @@ void main() {
     DECOMPRESS(tile_orange);
     DECOMPRESS(tile_outline);
 
-    originalBrightness = lcd_BacklightLevel;
     gfx_Begin();
     gfx_SetPalette(tetris_gfx_pal, sizeof_tetris_gfx_pal, 0);
     gfx_SetDrawBuffer();
@@ -120,7 +118,6 @@ void main() {
         gfx_SwapDraw();
     } while (mode != stop);
     gfx_End();
-    lcd_BacklightLevel = originalBrightness;
 
     free(tetris_logo_1);
     free(tetris_logo_2);
@@ -140,13 +137,6 @@ void step(){
         mode = stop;
     }
     switch(mode){
-        case logo:
-            drawTetrisLogo();
-            lcd_BacklightLevel = MAX(0, 255-(4*frameCount));
-            if (frameCount > 70){
-                mode = menu;
-            }
-        break;
         case menu:
             drawTetrisLogo();
             drawHighScores();
@@ -202,8 +192,8 @@ void drawTetrisLogo(){
 
 void drawHighScores(){
     gfx_SetTextFGColor(0x02);
-    // gfx_PrintStringXY("High Scores:", 120, 120);
-    // gfx_PrintStringXY("1: 0000 - JDG", 120, 130);
+    gfx_PrintStringXY("High Scores:", 120, 120);
+    gfx_PrintStringXY("1: 0000 - JDG", 120, 130);
     if((frameCount >> 5) & 1){
         gfx_PrintStringXY("Press    [enter]    to    start", 20, 225);
     }
